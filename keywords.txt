@@ -1,0 +1,47 @@
+# Keywords for Arduino IDE syntax highlighting
+
+# Classes (KEYWORD1)
+UWBTAG	KEYWORD1
+UWBAnchor	KEYWORD1
+
+# Enums (KEYWORD1)
+AnchorType	KEYWORD1
+GENERAL	KEYWORD1
+DATA_LOGGER	KEYWORD1
+POSITION_SERVER	KEYWORD1
+
+# Methods (KEYWORD2)
+setTagNumber	KEYWORD2
+refreshRate	KEYWORD2
+totalTags	KEYWORD2
+anchor0	KEYWORD2
+anchor1	KEYWORD2
+anchor2	KEYWORD2
+anchor3	KEYWORD2
+update	KEYWORD2
+setAnchorNumber	KEYWORD2
+setAnchorPosition	KEYWORD2
+setOtherAnchor	KEYWORD2
+getTrackedTagCount	KEYWORD2
+getTagX	KEYWORD2
+getTagY	KEYWORD2
+isTagActive	KEYWORD2
+getTagLastSeen	KEYWORD2
+getTagDistance	KEYWORD2
+getActiveTagCount	KEYWORD2
+
+# Variables (KEYWORD3)
+positionX	KEYWORD3
+positionY	KEYWORD3
+a0Distance	KEYWORD3
+a1Distance	KEYWORD3
+a2Distance	KEYWORD3
+a3Distance	KEYWORD3
+anchorType	KEYWORD3
+trackedTagCount	KEYWORD3
+
+# Constants (LITERAL1)
+MAX_TRACKED_TAGS	LITERAL1
+MAX_ANCHORS	LITERAL1
+MAX_OTHER_TAGS	LITERAL1
+POSITION_HISTORY_LENGTH	LITERAL1
