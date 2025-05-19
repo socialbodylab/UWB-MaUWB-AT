@@ -2,36 +2,7 @@
 
 A simplified Arduino library for the Makerfabs UWB Module with ESP32S3 and STM32 AT Command interface. This library provides an easy-to-use interface for UWB positioning applications with automatic display management and multi-tag tracking.
 
-## New in v1.1.0
-- 🏷️ **Multi-Tag Tracking**: Tags can now track distances to other tags
-- 📍 **Position Server Anchor**: Centralized position calculation and broadcasting
-- 🔍 **Enhanced Tag APIs**: `getTagDistance()`, `isTagActive()`, etc.
-- 🤝 **Full Backwards Compatibility**: Existing code continues to work unchanged
 
-## Features
-
-- 🏷️ **TAG Mode**: Automatic position calculation and display
-- ⚓ **ANCHOR Modes**: General, Data Logger, and Position Server
-- 📍 **Real-time Positioning**: Sub-10cm accuracy with proper setup
-- 🏷️ **Multi-Tag Support**: Track distances between tags
-- 🖥️ **Automatic Display**: Real-time status on OLED
-- 🔧 **Simple Configuration**: Minimal code required
-- 📡 **Network Tracking**: Up to 64 tags simultaneously
-- ⚡ **Plug-and-Play**: Automatic hardware initialization
-
-## Installation
-
-### Arduino Library Manager (Recommended)
-1. Open Arduino IDE
-2. Go to Sketch → Include Library → Manage Libraries
-3. Search for "UWB-MaUWB-AT"
-4. Click Install
-
-### Manual Installation
-1. Download the library as a ZIP file
-2. Open Arduino IDE
-3. Go to Sketch → Include Library → Add .ZIP Library
-4. Select the downloaded ZIP file
 
 ## Dependencies
 
