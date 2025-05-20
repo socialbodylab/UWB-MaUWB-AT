@@ -1,4 +1,5 @@
 #include <UWB-MaUWB-AT.h>
+#include <math.h> // For sqrt function in the example
 
 // Create TAG instance
 UWBTAG myTag;
@@ -28,6 +29,16 @@ void setup() {
 void loop() {
     // Update tag (handles all UWB operations)
     myTag.update();
+    
+    // Display position data every second
+    static unsigned long lastPrint = 0;
+    if (millis() - lastPrint > 1000) {
+        Serial.print("Position: X=");
+        Serial.print(myTag.positionX);
+        Serial.print(" Y=");
+        Serial.println(myTag.positionY);
+        lastPrint = millis();
+    }
     
     /* Example: Using x,y position to control an LED on pin 5
      * -----------------------------------------------------

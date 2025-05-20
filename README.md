@@ -78,7 +78,7 @@ void loop() {
 
 - **Makerfabs UWB Module** with ESP32S3
 - **SSD1306 OLED Display** (128x64)
-- **At least 3 UWB anchors** for position calculation
+- **Requires 3-4 UWB anchors** for position calculation (uses all available anchors for improved accuracy)
 
 ## API Reference
 

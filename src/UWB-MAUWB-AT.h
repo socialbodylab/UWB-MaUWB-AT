@@ -32,6 +32,9 @@ public:
     // Constructor
     UWBTAG();
     
+    // Destructor
+    ~UWBTAG();
+    
     // Configuration methods
     void setTagNumber(int tagNum);
     void refreshRate(unsigned long rate);
@@ -120,6 +123,9 @@ class UWBAnchor {
 public:
     // Constructor
     UWBAnchor(AnchorType type);
+    
+    // Destructor
+    ~UWBAnchor();
     
     // Configuration methods
     void setAnchorNumber(int anchorNum);

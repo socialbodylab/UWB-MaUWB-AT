@@ -1,6 +1,7 @@
 //developed with Claude 3.7
 
 #include "UWB-MaUWB-AT.h"
+#include <cmath> // Include for sqrt() and abs() functions
 
 UWBTAG::UWBTAG() {
     // Initialize variables
@@ -47,6 +48,14 @@ UWBTAG::UWBTAG() {
     
     // Initialize hardware immediately
     initializeHardware();
+}
+
+UWBTAG::~UWBTAG() {
+    // Free allocated memory for display
+    if (_display != nullptr) {
+        delete _display;
+        _display = nullptr;
+    }
 }
 
 void UWBTAG::initializeHardware() {
@@ -308,45 +317,140 @@ void UWBTAG::parsePositionData(String data) {
         _newData = true;
     }
 }
+
+void UWBTAG::calculatePosition() {
     // Check if we have valid distances from all 4 anchors
     if (a0Distance <= 0 || a1Distance <= 0 || a2Distance <= 0 || a3Distance <= 0) {
         return;
     }
     
-    // Using simple triangulation with three anchors (A0, A1, A2)
+    // First calculate position using anchors 0,1,2 (original method)
     // Convert distances from cm to m for numerical stability
     float r1 = a0Distance / 100.0;
     float r2 = a1Distance / 100.0;
     float r3 = a2Distance / 100.0;
+    float r4 = a3Distance / 100.0;
     
     // Convert anchor positions to meters
     float x1 = _anchorPositions[0][0] / 100.0;
-    float y1 = _anchorPositions[0][1] / 100.0;
+    float y1_pos = _anchorPositions[0][1] / 100.0;
     float x2 = _anchorPositions[1][0] / 100.0;
     float y2 = _anchorPositions[1][1] / 100.0;
     float x3 = _anchorPositions[2][0] / 100.0;
     float y3 = _anchorPositions[2][1] / 100.0;
+    float x4 = _anchorPositions[3][0] / 100.0;
+    float y4 = _anchorPositions[3][1] / 100.0;
     
-    // Calculate intermediate values for triangulation
-    float A = 2 * (x2 - x1);
-    float B = 2 * (y2 - y1);
-    float C = r1 * r1 - r2 * r2 - x1 * x1 + x2 * x2 - y1 * y1 + y2 * y2;
-    float D = 2 * (x3 - x2);
-    float E = 2 * (y3 - y2);
-    float F = r2 * r2 - r3 * r3 - x2 * x2 + x3 * x3 - y2 * y2 + y3 * y3;
+    // Calculate positions using three different sets of three anchors
+    // Position 1: Using anchors 0,1,2 (original method)
+    float A1 = 2 * (x2 - x1);
+    float B1 = 2 * (y2 - y1_pos);
+    float C1 = r1 * r1 - r2 * r2 - x1 * x1 + x2 * x2 - y1_pos * y1_pos + y2 * y2;
+    float D1 = 2 * (x3 - x2);
+    float E1 = 2 * (y3 - y2);
+    float F1 = r2 * r2 - r3 * r3 - x2 * x2 + x3 * x3 - y2 * y2 + y3 * y3;
     
-    // Calculate position (in meters)
-    float x = 0.0, y = 0.0;
+    float den1 = (A1 * E1 - B1 * D1);
+    float x_1 = 0.0, y_1 = 0.0;
+    bool valid1 = false;
     
-    // Check if we can solve the system
-    float denominator = (A * E - B * D);
-    if (abs(denominator) < 0.000001) {
+    if (std::abs(den1) > 0.000001) {
+        x_1 = (C1 * E1 - F1 * B1) / den1;
+        y_1 = (A1 * F1 - C1 * D1) / den1;
+        valid1 = true;
+    }
+    
+    // Position 2: Using anchors 0,1,3
+    float A2 = 2 * (x2 - x1);
+    float B2 = 2 * (y2 - y1_pos);
+    float C2 = r1 * r1 - r2 * r2 - x1 * x1 + x2 * x2 - y1_pos * y1_pos + y2 * y2;
+    float D2 = 2 * (x4 - x2);
+    float E2 = 2 * (y4 - y2);
+    float F2 = r2 * r2 - r4 * r4 - x2 * x2 + x4 * x4 - y2 * y2 + y4 * y4;
+    
+    float den2 = (A2 * E2 - B2 * D2);
+    float x_2 = 0.0, y_2 = 0.0;
+    bool valid2 = false;
+    
+    if (std::abs(den2) > 0.000001) {
+        x_2 = (C2 * E2 - F2 * B2) / den2;
+        y_2 = (A2 * F2 - C2 * D2) / den2;
+        valid2 = true;
+    }
+    
+    // Position 3: Using anchors 0,2,3
+    float A3 = 2 * (x3 - x1);
+    float B3 = 2 * (y3 - y1_pos);
+    float C3 = r1 * r1 - r3 * r3 - x1 * x1 + x3 * x3 - y1_pos * y1_pos + y3 * y3;
+    float D3 = 2 * (x4 - x3);
+    float E3 = 2 * (y4 - y3);
+    float F3 = r3 * r3 - r4 * r4 - x3 * x3 + x4 * x4 - y3 * y3 + y4 * y4;
+    
+    float den3 = (A3 * E3 - B3 * D3);
+    float x_3 = 0.0, y_3 = 0.0;
+    bool valid3 = false;
+    
+    if (std::abs(den3) > 0.000001) {
+        x_3 = (C3 * E3 - F3 * B3) / den3;
+        y_3 = (A3 * F3 - C3 * D3) / den3;
+        valid3 = true;
+    }
+    
+    // Position 4: Using anchors 1,2,3
+    float A4 = 2 * (x3 - x2);
+    float B4 = 2 * (y3 - y2);
+    float C4 = r2 * r2 - r3 * r3 - x2 * x2 + x3 * x3 - y2 * y2 + y3 * y3;
+    float D4 = 2 * (x4 - x3);
+    float E4 = 2 * (y4 - y3);
+    float F4 = r3 * r3 - r4 * r4 - x3 * x3 + x4 * x4 - y3 * y3 + y4 * y4;
+    
+    float den4 = (A4 * E4 - B4 * D4);
+    float x_4 = 0.0, y_4 = 0.0;
+    bool valid4 = false;
+    
+    if (std::abs(den4) > 0.000001) {
+        x_4 = (C4 * E4 - F4 * B4) / den4;
+        y_4 = (A4 * F4 - C4 * D4) / den4;
+        valid4 = true;
+    }
+    
+    // Calculate weighted average position
+    float x_sum = 0.0;
+    float y_sum = 0.0;
+    float weight_sum = 0.0;
+    
+    if (valid1) {
+        x_sum += x_1;
+        y_sum += y_1;
+        weight_sum += 1.0;
+    }
+    
+    if (valid2) {
+        x_sum += x_2;
+        y_sum += y_2;
+        weight_sum += 1.0;
+    }
+    
+    if (valid3) {
+        x_sum += x_3;
+        y_sum += y_3;
+        weight_sum += 1.0;
+    }
+    
+    if (valid4) {
+        x_sum += x_4;
+        y_sum += y_4;
+        weight_sum += 1.0;
+    }
+    
+    // Check if we have at least one valid position
+    if (weight_sum < 1.0) {
         return;
     }
     
-    // Solve for position
-    x = (C * E - F * B) / denominator;
-    y = (A * F - C * D) / denominator;
+    // Calculate final position (in meters)
+    float x = x_sum / weight_sum;
+    float y = y_sum / weight_sum;
     
     // Convert back to cm
     float rawX = x * 100.0;
@@ -443,7 +547,7 @@ float UWBTAG::getTagDistance(int tagID) {
             // Calculate distance using Euclidean formula
             float dx = _otherTags[i].x - positionX;
             float dy = _otherTags[i].y - positionY;
-            return sqrt(dx * dx + dy * dy);
+            return std::sqrt(dx * dx + dy * dy);
         }
     }
     
@@ -513,6 +617,37 @@ String UWBTAG::sendCommand(String command, int timeout, bool debug) {
     return response;
 }
 
+UWBTAG::OtherTag* UWBTAG::getOtherTag(int tagID) {
+    // First, look for existing tag
+    for (int i = 0; i < MAX_OTHER_TAGS; i++) {
+        if (_otherTags[i].tagID == tagID && _otherTags[i].active) {
+            return &_otherTags[i];
+        }
+    }
+    
+    // If not found, find an empty slot
+    for (int i = 0; i < MAX_OTHER_TAGS; i++) {
+        if (!_otherTags[i].active || _otherTags[i].tagID == -1) {
+            _otherTags[i].tagID = tagID;
+            _otherTags[i].active = true;
+            _otherTags[i].lastSeen = millis();
+            _activeOtherTagCount++;
+            return &_otherTags[i];
+        }
+    }
+    
+    return nullptr; // No available slots
+}
+
+void UWBTAG::updateOtherTagLastSeen(int tagID) {
+    for (int i = 0; i < MAX_OTHER_TAGS; i++) {
+        if (_otherTags[i].tagID == tagID && _otherTags[i].active) {
+            _otherTags[i].lastSeen = millis();
+            break;
+        }
+    }
+}
+
 // ==============================
 // UWBAnchor Implementation
 // ==============================
@@ -557,6 +692,14 @@ UWBAnchor::UWBAnchor(AnchorType type) {
     
     // Initialize hardware immediately
     initializeHardware();
+}
+
+UWBAnchor::~UWBAnchor() {
+    // Free allocated memory for display
+    if (_display != nullptr) {
+        delete _display;
+        _display = nullptr;
+    }
 }
 
 void UWBAnchor::initializeHardware() {
@@ -843,14 +986,13 @@ void UWBAnchor::calculateTagPosition(int tagIndex) {
     
     TrackedTag* tag = &_trackedTags[tagIndex];
     
-    // Simple triangulation using first 3 configured anchors
-    // Find 3 anchors with valid distances
+    // Find all anchors with valid distances
     int anchorCount = 0;
-    int validAnchors[3];
-    float distances[3];
-    float anchorX[3], anchorY[3];
+    int validAnchors[MAX_ANCHORS];
+    float distances[MAX_ANCHORS];
+    float anchorX[MAX_ANCHORS], anchorY[MAX_ANCHORS];
     
-    for (int i = 0; i < MAX_ANCHORS && anchorCount < 3; i++) {
+    for (int i = 0; i < MAX_ANCHORS; i++) {
         if (_anchorConfigured[i] && tag->distanceToAnchor[i] > 0) {
             validAnchors[anchorCount] = i;
             distances[anchorCount] = tag->distanceToAnchor[i];
@@ -860,34 +1002,67 @@ void UWBAnchor::calculateTagPosition(int tagIndex) {
         }
     }
     
+    // Need at least 3 anchors for triangulation
     if (anchorCount >= 3) {
-        // Use triangulation algorithm (same as UWBTAG)
-        float r1 = distances[0] / 100.0;
-        float r2 = distances[1] / 100.0;
-        float r3 = distances[2] / 100.0;
+        // Calculate all possible triangle combinations for triangulation
+        int combinationCount = 0;
+        float posX[10] = {0}; // Max 10 possible triangles
+        float posY[10] = {0};
+        bool valid[10] = {false};
         
-        float x1 = anchorX[0] / 100.0;
-        float y1 = anchorY[0] / 100.0;
-        float x2 = anchorX[1] / 100.0;
-        float y2 = anchorY[1] / 100.0;
-        float x3 = anchorX[2] / 100.0;
-        float y3 = anchorY[2] / 100.0;
+        // Try all triangle combinations
+        for (int i = 0; i < anchorCount - 2; i++) {
+            for (int j = i + 1; j < anchorCount - 1; j++) {
+                for (int k = j + 1; k < anchorCount; k++) {
+                    if (combinationCount >= 10) break; // Safety limit
+                    
+                    // Use triangulation algorithm
+                    float r1 = distances[i] / 100.0;
+                    float r2 = distances[j] / 100.0;
+                    float r3 = distances[k] / 100.0;
+                    
+                    float x1 = anchorX[i] / 100.0;
+                    float y1_pos = anchorY[i] / 100.0;
+                    float x2 = anchorX[j] / 100.0;
+                    float y2 = anchorY[j] / 100.0;
+                    float x3 = anchorX[k] / 100.0;
+                    float y3 = anchorY[k] / 100.0;
+                    
+                    float A = 2 * (x2 - x1);
+                    float B = 2 * (y2 - y1_pos);
+                    float C = r1 * r1 - r2 * r2 - x1 * x1 + x2 * x2 - y1_pos * y1_pos + y2 * y2;
+                    float D = 2 * (x3 - x2);
+                    float E = 2 * (y3 - y2);
+                    float F = r2 * r2 - r3 * r3 - x2 * x2 + x3 * x3 - y2 * y2 + y3 * y3;
+                    
+                    float denominator = (A * E - B * D);
+                    if (std::abs(denominator) > 0.000001) {
+                        posX[combinationCount] = (C * E - F * B) / denominator;
+                        posY[combinationCount] = (A * F - C * D) / denominator;
+                        valid[combinationCount] = true;
+                        combinationCount++;
+                    }
+                }
+            }
+        }
         
-        float A = 2 * (x2 - x1);
-        float B = 2 * (y2 - y1);
-        float C = r1 * r1 - r2 * r2 - x1 * x1 + x2 * x2 - y1 * y1 + y2 * y2;
-        float D = 2 * (x3 - x2);
-        float E = 2 * (y3 - y2);
-        float F = r2 * r2 - r3 * r3 - x2 * x2 + x3 * x3 - y2 * y2 + y3 * y3;
+        // Average all valid positions
+        float x_sum = 0.0;
+        float y_sum = 0.0;
+        int validCount = 0;
         
-        float denominator = (A * E - B * D);
-        if (abs(denominator) > 0.000001) {
-            float x = (C * E - F * B) / denominator;
-            float y = (A * F - C * D) / denominator;
-            
+        for (int i = 0; i < combinationCount; i++) {
+            if (valid[i]) {
+                x_sum += posX[i];
+                y_sum += posY[i];
+                validCount++;
+            }
+        }
+        
+        if (validCount > 0) {
             // Convert back to cm
-            tag->x = x * 100.0;
-            tag->y = y * 100.0;
+            tag->x = (x_sum / validCount) * 100.0;
+            tag->y = (y_sum / validCount) * 100.0;
             tag->positionValid = true;
         }
     }
